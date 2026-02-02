@@ -1,0 +1,22 @@
+name: Autograde (Tag-based)
+
+on:
+  push:
+    tags:
+      - 'M0'
+      - 'M1'
+      - 'M2'
+      - 'M3'
+
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: 'Milestone to grade'
+        required: true
+        default: M0
+
+jobs:
+  autograde:
+    uses: 2110634-SDD/sdd-autograding/.github/workflows/reusable-autograde.yml@main
+    with:
+      milestone: ${{ github.event_name == 'push' && github.ref_name || inputs.milestone }}
