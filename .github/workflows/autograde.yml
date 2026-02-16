@@ -3,20 +3,54 @@ name: Autograde (Tag-based)
 on:
   push:
     tags:
-      - 'M0'
-      - 'M1'
-      - 'M2'
-      - 'M3'
+      # New style (recommended): v1.0-M1, v1.1-M1, release-M1, etc.
+      - "*-M0"
+      - "*-M1"
+      - "*-M2"
+      - "*-M3"
+      # Backward-compatible: M0, M1, M2, M3
+      - "M0"
+      - "M1"
+      - "M2"
+      - "M3"
 
   workflow_dispatch:
     inputs:
       milestone:
-        description: 'Milestone to grade'
+        description: "Milestone to grade (e.g., M0, M1, M2, M3)"
         required: true
-        default: M0
+        default: "M0"
+        type: choice
+        options: ["M0", "M1", "M2", "M3"]
+      ref:
+        description: "Git ref to grade (tag/branch/sha). Example: v1.1-M1"
+        required: true
+        default: "M0"
+        type: string
+      debug:
+        description: "Enable debug logging"
+        required: false
+        default: true
+        type: boolean
+      commit_results:
+        description: "Commit grading result back into this repo (default branch)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   autograde:
     uses: 2110634-SDD/sdd-autograding/.github/workflows/reusable-autograde.yml@main
     with:
-      milestone: ${{ github.event_name == 'push' && github.ref_name || inputs.milestone }}
+      # Push-tag: infer milestone from suffix (-M0/-M1/-M2/-M3) or use tag name if it's exactly M0..M3
+      milestone: ${{ github.event_name == 'push' && (endsWith(github.ref_name, '-M0') && 'M0' || endsWith(github.ref_name, '-M1') && 'M1' || endsWith(github.ref_name, '-M2') && 'M2' || endsWith(github.ref_name, '-M3') && 'M3' || github.ref_name) || inputs.milestone }}
+
+      debug: ${{ github.event_name == 'workflow_dispatch' && inputs.debug || false }}
+      commit_results: ${{ github.event_name == 'workflow_dispatch' && inputs.commit_results || false }}
+
+      # IMPORTANT: tell reusable which student ref to grade (tag/branch/sha)
+      student_ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}
