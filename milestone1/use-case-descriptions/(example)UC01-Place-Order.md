@@ -1,7 +1,7 @@
 # UC01 – Place Order 
 
 ## Primary Actor
-Customer
+- Customer
 
 ## Secondary Actors (if any)
 - Payment Gateway (optional)
